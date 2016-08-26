@@ -1,0 +1,133 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Transaction App</title>
+</head>
+<body>
+    
+    <div>
+        <h2>All Transactions</h2>
+        <ul id="transactions" />
+    </div>
+    <div>
+        <h2>Search by ID</h2>
+        <input type="text" id="transactionId" size="5" />
+        <input type="button" value="Search" onclick="find();" />
+        <p id="transaction" />
+    </div>
+
+    <div>
+        <h2>Register</h2>
+        <input type="text" id="username" size="5" />
+        <input type="text" id="password" size="5" />
+        <input type="button" value="login" onclick="login();" />
+
+        <input type="button" value="register" onclick="register();" />
+        
+    </div>
+
+    <div id="status" style="color:#ff6a00"></div>
+    <div id="token" style="display:none"></div>
+    <hr />
+    <a href="configuration.html">Configuration</a>
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.0.3.min.js"></script>
+    <script>
+    var uri = 'api/transactions';
+
+    $(document).ready(function () {
+        load();
+    });
+
+    function formatItem(item) {
+        return item.orderID;
+    }
+
+    function register() {
+        var userName = $('#username').val();
+        var password = $('#password').val();
+        var password2 = $('#password').val();
+
+        var user = { UserName: userName, Password: password, ConfirmPassword: password2 };
+        $.ajax({
+            type: "POST",
+            data: JSON.stringify(user),
+            url: "api/account/register",
+            contentType: 'application/json; charset=utf-8',
+            
+            success: function (data, textStatus, xhr) {
+                $('#status').html(xhr.textStatus);
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                $('#status').html(xhr.responseJSON);
+            }
+
+        });
+    }
+
+
+    function login(){
+        var userName = $('#username').val();
+        var password = $('#password').val();
+        var user = { userName: userName, password: password, grant_type: 'password' };
+
+        $.ajax({
+            url: "/TOKEN",
+            method: "POST",
+
+            dataType: "json",
+            
+            data: { username: userName, password: password, grant_type: 'password'},
+            contentType: 'application/x-www-form-urlencoded;; charset=utf-8',
+
+            success: function (data, textStatus, xhr) {
+                //$('#status').html(data.access_token);
+                $('#status').html("");
+                $('#token').html(data.access_token);
+                load();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                $('#status').html(xhr.responseJSON.error_description);
+            }
+
+        });
+    }
+
+
+
+    function find() {
+      var id = $('#transactionId').val();
+      $.getJSON(uri + '/' + id)
+          .done(function (data) {
+              $('#transaction').text(formatItem(data));
+          })
+          .fail(function (jqXHR, textStatus, err) {
+              $('#transaction').text('Error: ' + err);
+          });
+    }
+
+    function load() {
+        var token = $('#token').html();
+        var authHeaders = {};
+        if (token!="") {
+            authHeaders.Authorization = 'Bearer ' + token;
+        }
+
+        $.ajax({
+            type: "GET",
+            headers: authHeaders,
+            url: uri,
+            success: function (data, textStatus, xhr) {
+                $.each(data, function (key, item) {
+                    // Add a list item for the product.
+                    $('<li>', { text: formatItem(item) }).appendTo($('#transactions'));
+                });
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                $('#status').html(xhr.responseJSON.message + ": " + uri);
+            }
+
+        });
+    }
+    </script>
+</body>
+</html>

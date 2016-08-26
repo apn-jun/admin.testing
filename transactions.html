@@ -1,0 +1,182 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>APN admin</title>
+
+	<meta charset="utf-8" />
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <link href="styles/master.css" rel="stylesheet">
+    <link href="styles/ie10-viewport-bug-workaround.css" rel="stylesheet">
+    <script src="js/ie-emulation-modes-warning.js"></script>
+    <script src="js/common.js"></script>
+    
+   
+
+</head>
+<body>
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">APN Admin</a>
+            </div>
+            <div id="navbar" class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li id="homeLi" ><a href="index.html" >Home</a></li>
+                    <li id="transactionsLi" class="active"><a href="transactions.html" >Transactions</a></li>
+                    <!--<li><a href="#contact">Contact</a></li>-->
+                </ul>
+            </div><!--/.nav-collapse -->
+        </div>
+    </nav>
+
+    <div class="container">
+
+        
+		<div class="row starter-template"  id="transactionsDiv" >
+            <div class="col-md-6">
+                
+                <div id="transactions">
+					<table id="transactionTable" class="table table-bordered">
+						<thead>
+							<tr>
+								<th>ContactsId</th>
+								<th>Count</th>
+								<th>Total Rebate</th>
+							</tr>
+						</thead>
+						<tbody>
+							
+						</tbody>
+					</table>
+				</div>
+            </div>
+            <div class="col-md-6">
+                <div id="estimates" style="display:none">
+				<h3 id="contactsIdDiv"></h3>
+				<table id="estimateTable" class="table table-bordered">
+						<thead>
+							<tr>
+								<th>Transaction Date</th>
+								<th>Estimate FileId</th>
+								<th>Created</th>
+							</tr>
+						</thead>
+						<tbody>
+							
+						</tbody>
+				</table>
+				</div>	
+            </div>
+
+
+        </div>
+
+			
+		  
+       
+       
+
+        <div id="status" style="color:#ff6a00"></div>
+      
+
+        
+
+    </div><!-- /.container -->
+
+    <script src="js/ie10-viewport-bug-workaround.js"></script>    
+    <script>
+        var uri = "api/transactions";
+        $(document).ready(function () {
+            loadTransactions();
+            
+        });
+
+
+		function loadEstimates(contactsId) {
+			$("#estimates").show();
+            $("#estimateTable tbody").empty();
+			$('#contactsIdDiv').html(contactsId);
+            var token = getCookie("token");
+            var authHeaders = {};
+            if (token != "") {
+                authHeaders.Authorization = 'Bearer ' + token;
+            }
+
+            $.ajax({
+                type: "GET",
+                headers: authHeaders,
+                url: uri+'/'+contactsId+"/all" ,
+                success: function (data, textStatus, xhr) {
+                    $.each(data, function (key, e) {
+                        var tr = "<tr><td>" + 
+						
+						
+					
+                        e.transactionDate + "</a></td><td>" +
+                        e.estimateFileId + "</td><td>" +
+                        e.created + "</td></tr>";
+                        $("#estimateTable tbody").append(tr);
+                        
+
+                    });
+
+                    
+
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    $('#status').html(xhr.responseJSON.message + ": " + uri);
+                    if (errorThrown && "Unauthorized" == errorThrown)
+                     window.location = "login.html";
+                }
+
+            });
+        }
+		
+					
+        function loadTransactions() {
+            $("#transactionTable tbody").empty();
+            var token = getCookie("token");
+            var authHeaders = {};
+            if (token != "") {
+                authHeaders.Authorization = 'Bearer ' + token;
+            }
+
+            $.ajax({
+                type: "GET",
+                headers: authHeaders,
+                url: uri,
+                success: function (data, textStatus, xhr) {
+                    $.each(data, function (key, t) {
+                        var tr = "<tr><td><a href='#' onclick='loadEstimates(" +t.contactsId +")'>" + 
+                        t.contactsId + "</a></td><td>" +
+                        t.totalEstimates + "</td><td>" +
+                        t.totalRebate + "</td></tr>";
+                        $("#transactionTable tbody").append(tr);
+                        
+
+                    });
+
+                    
+
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    $('#status').html(xhr.responseJSON.message + ": " + uri);
+                    if (errorThrown && "Unauthorized" == errorThrown)
+                     window.location = "login.html";
+                }
+
+            });
+        }
+
+        
+       
+    </script>
+</body>
+</html>
