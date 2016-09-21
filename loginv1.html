@@ -1,0 +1,118 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+	<meta charset="utf-8" />
+</head>
+<body>
+
+    <div>
+        <h2>Login</h2>
+        <input type="text" id="username" size="5" />
+        <input type="text" id="password" size="5" />
+        <input type="button" value="login" onclick="login();" />
+
+        <hr />
+        <input type="button" value="regiser" onclick="register();" />
+    </div>
+
+    <div id="status" style="color:#ff6a00"></div>
+    <div id="token" style="display:none"></div>
+    <div id="transactions"></div>
+    
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.0.3.min.js"></script>
+    <script>
+    var uri = 'api/transactions';
+
+    $(document).ready(function () {
+        load();
+    });
+    function formatItem(item) {
+        return item.contactsId + ": " + item.totalEstimates + " | " + item.totalRebate;
+    }
+   
+
+    function register() {
+        $('#status').html("processing...");
+        var userName = $('#username').val();
+        var password = $('#password').val();
+        var password2 = $('#password').val();
+
+        var user = { UserName: userName, Password: password, ConfirmPassword: password2 };
+        $.ajax({
+            type: "POST",
+            data: JSON.stringify(user),
+            url: "api/account/register",
+            dataType: "json",
+            contentType: 'application/json; charset=utf-8',
+
+            success: function (data, textStatus, xhr) {
+                $('#status').html(textStatus);
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                $('#status').html(errorThrown);
+            }
+
+        });
+    }
+
+
+    function login() {
+        $('#status').html("processing...");
+        var userName = $('#username').val();
+        var password = $('#password').val();
+        var user = { userName: userName, password: password, grant_type: 'password' };
+
+        $.ajax({
+            url: "/token",
+            method: "POST",
+
+            dataType: "json",
+
+            data: { username: userName, password: password, grant_type: 'password'},
+            contentType: 'application/x-www-form-urlencoded;; charset=utf-8',
+
+            success: function (data, textStatus, xhr) {
+                //$('#status').html(data.access_token);
+                $('#status').html("");
+                $('#token').html(data.access_token);
+                load();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                $('#status').html(errorThrown);
+            }
+
+        });
+    }
+
+
+
+   
+
+    function load() {
+        var token = $('#token').html();
+        var authHeaders = {};
+        if (token!="") {
+            authHeaders.Authorization = 'Bearer ' + token;
+        }
+
+        $.ajax({
+            type: "GET",
+            headers: authHeaders,
+            url: uri,
+            success: function (data, textStatus, xhr) {
+                $.each(data, function (key, item) {
+                    // Add a list item for the product.
+                    $('<li>', { text: formatItem(item) }).appendTo($('#transactions'));
+                });
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                $('#status').html(xhr.responseJSON.message + ": " + uri);
+            }
+
+        });
+    }
+    </script>
+
+</body>
+</html>
