@@ -163,9 +163,10 @@
 
                 },
                 error: function (xhr, textStatus, errorThrown) {
-                    $('#status').html(xhr.responseJSON.message + ": " + uri);
-                    if (errorThrown && "Unauthorized" == errorThrown)
-                     window.location = "login.html";
+                    //$('#status').html(xhr.responseJSON.message + ": " + uri);
+                    $('#status').html(errorThrown);
+                    if (errorThrown && ("Unauthorized" == errorThrown || "Not Found" == errorThrown))
+                        window.location = "login.html";
                 }
 
             });
